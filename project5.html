@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CompliGo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reset styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styling */
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff8a8a, #ffc08a, #ffd19a, #8affaf);
+            background-size: 400% 400%;
+            animation: gradientTransition 15s ease infinite;
+        }
+
+        /* Gradient animation */
+        @keyframes gradientTransition {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Tab styling */
+        .tab-container {
+            text-align: center;
+            color: #333;
+            padding: 2rem;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            position: relative; /* Added for positioning canvas */
+        }
+
+        /* Tab button styling */
+        .tab-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .tab-buttons button {
+            padding: 0.5rem 1rem;
+            margin: 0 0.5rem;
+            border: none;
+            border-radius: 5px;
+            background-color: #ff8a8a;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .tab-buttons button.active {
+            background-color: #ffc08a;
+        }
+
+        .tab-buttons button:hover {
+            background-color: #ffd19a;
+        }
+
+        /* Content sections */
+        .tab-content {
+            display: none;
+            font-size: 1.2rem;
+            font-weight: 300;
+            color: #444;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .tab-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ff8a8a;
+            margin-bottom: 1rem;
+        }
+
+        /* Video styling */
+        #videoFeed {
+            width: 100%;
+            border-radius: 12px;
+            margin-top: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Compliment styling */
+        .compliment {
+            font-size: 1.1rem;
+            color: #e9dbdb;
+            margin-top: 1rem;
+            animation: fadeIn 1s ease;
+        }
+
+        /* Fade in animation for compliments */
+        @keyframes fadeIn {
+            from { opacity: 100; }
+            to { opacity: 200; }
+        }
+
+        /* Canvas styling */
+        #canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-radius: 12px;
+        }
+        #features button {
+        padding: 0.8rem 1.5rem;
+        margin: 1rem 0;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    /* Button hover effect */
+    #features button:hover {
+        background: linear-gradient(135deg, #ff8e53, #ff6b6b);
+        box-shadow: 0 6px 12px rgba(255, 107, 107, 0.5);
+        transform: scale(1.05);
+    }
+    </style>
+</head>
+<body>
+    <div class="tab-container">
+        <!-- Tab Buttons -->
+        <div class="tab-buttons">
+            <button id="homeTab" onclick="openTab('home')" class="active">Home</button>
+            <button id="featuresTab" onclick="openTab('features')">Features</button>
+        </div>
+
+        <!-- Home Content -->
+        <div id="home" class="tab-content active">
+            <h1> CompliGo</h1>
+            <p>Explore a world where technology meets creativity. Compligo is designed to elevate your digital experience through seamless, beautiful, and efficient web solutions. Join us on our journey to innovate and inspire.</p>
+        </div>
+
+        <!-- Features Content -->
+        <div id="features" class="tab-content">
+            <button onclick="startCamera()">Enable Camera & Get Compliments</button>
+            <video id="videoFeed" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <div id="complimentSection"></div>
+            <h1>Features</h1>
+            <p>Compligo offers a unique feature to provide compliments and suggestions based on a live camera feed. Enable the camera to see it in action!</p>
+           
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.rawgit.com/eduardolundgren/tracking.js/master/build/tracking-min.js"></script>
+    <script src="https://cdn.rawgit.com/eduardolundgren/tracking.js/master/build/data/face.min.js"></script>
+
+
+    
+
+
+    <script>
+        // Compliment list
+        const compliments = [
+            "You have an amazing sense of style!",
+            "Your smile could light up any room.",
+            "You're incredibly talented!",
+            "Your energy is contagious!",
+            "You make everyone around you feel special.",
+            "You have a heart of gold!",
+            "You're truly a one-of-a-kind person!",
+            "Your creativity is boundless!"
+        ];
+
+        // Tab switching function
+        function openTab(tabName) {
+            const contents = document.getElementsByClassName("tab-content");
+            const buttons = document.getElementsByClassName("tab-buttons")[0].children;
+
+            // Hide all tab contents and remove active class from all buttons
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove("active");
+            }
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove("active");
+            }
+
+            // Show the current tab and add active class to the button
+            document.getElementById(tabName).classList.add("active");
+            document.getElementById(tabName + "Tab").classList.add("active");
+
+            // Stop camera if switching away from "Features" tab
+            if (tabName !== 'features') stopCamera();
+        }
+
+        // Start the camera and display compliments
+        function startCamera() {
+    const video = document.getElementById("videoFeed");
+    const complimentSection = document.getElementById("complimentSection");
+    const canvas = document.getElementById("canvas");
+    const context = canvas.getContext("2d");
+
+    // Create a tracker for faces
+    var tracker = new tracking.ObjectTracker('face');
+
+    // Access camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            video.srcObject = stream;
+            video.play();
+
+            // Set canvas dimensions based on video metadata
+            video.addEventListener('loadedmetadata', function() {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            });
+
+            // Initialize tracking
+            tracking.track('#videoFeed', tracker, { camera: true });
+
+            // When a face is detected
+            tracker.on('track', function(event) {
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                if (event.data.length === 0) {
+                    complimentSection.innerHTML = `<div class="compliment">No face detected. You are still amazing!</div>`;
+                } else {
+                    event.data.forEach(function(rect) {
+                        context.strokeStyle = '#00FF00';
+                        context.strokeRect(rect.x, rect.y, rect.width, rect.height);
+                        const compliment = compliments[Math.floor(Math.random() * compliments.length)];
+                        complimentSection.innerHTML = `<div class="compliment">${compliment}</div>`;
+                    });
+                }
+            });
+        })
+        .catch(err => {
+            complimentSection.innerHTML = "<p style='color: red;'>Camera access denied. Please allow camera access for this feature.</p>";
+        });
+}
+
+        
+
+        // Stop the camera feed
+        function stopCamera() {
+            const video = document.getElementById("videoFeed");
+            const stream = video.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        }
+    </script>
+</body>
+</html>
+
+
